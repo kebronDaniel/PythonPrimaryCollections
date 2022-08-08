@@ -3,6 +3,7 @@ from tkinter import *
 from tkinter import messagebox
 from string import ascii_letters, digits
 import pyperclip
+import json
 
 all_symbols = ['!', '@', '#', '$', '%', '^',
                '&', '*', '(', ')', '_' '-', '+', '*']
@@ -24,7 +25,7 @@ website_text.grid(row=1, column=0)
 
 website = Entry(width=35)
 website.focus()
-website.grid(row=1, column=1, columnspan=2)
+website.grid(row=1, column=1)
 
 email_text = Label(text="Email/Username:")
 email_text.grid(row=2, column=0)
@@ -45,6 +46,13 @@ def save_password():
     email_data = email.get()
     password_data = password.get()
 
+    new_entry = {
+        website_data: {
+            "email": email_data,
+            "password": password_data
+        }
+    }
+
     if len(website_data) == 0 or len(password_data) == 0 or len(email_data) == 0:
         messagebox.showerror(title="Empty Fields", message="You have got empty fields, Please fill them out!")
     else:
@@ -52,18 +60,31 @@ def save_password():
                                                                       f"Email:{email_data}\n"
                                                                       f"Password:{password_data}\n"
                                                                       f"Do You want to Save?")
+
         if is_ok:
-            with open("data.txt", "a") as data:
-                data.write(f"{website_data}    |   {email_data}   |   {password_data} \n")
+            try:
+                with open("data.json", "r") as data_file:
+                    data = json.load(data_file)
+            except FileNotFoundError:
+                with open("data.json", "w") as data_file:
+                    json.dump(new_entry, data_file, indent=4)
+            else:
+                data.update(new_entry)
+                with open("data.json", "w") as data_file:
+                    json.dump(data, data_file, indent=4)
+            finally:
                 website.delete(0, END)
                 password.delete(0, END)
+                messagebox.showinfo(title="Password copied",
+                                    message="The current password you generated was copied to the "
+                                            "clipboard, You can use it any where you wish.")
 
-                reset_spans = StringVar(window)
-                reset_spans.set("0")
+            reset_spans = StringVar(window)
+            reset_spans.set("0")
 
-                string_span.config(textvariable=reset_spans)
-                number_span.config(textvariable=reset_spans)
-                symbol_span.config(textvariable=reset_spans)
+            string_span.config(textvariable=reset_spans)
+            number_span.config(textvariable=reset_spans)
+            symbol_span.config(textvariable=reset_spans)
 
 
 string_password_label = Label(text="Number of letters ")
@@ -94,9 +115,11 @@ def custom_password_generator():
     numbers = random.choices(all_digits, k=number_of_numerics)
     symbols = random.choices(all_symbols, k=number_of_symbols)
     new_password = letters + numbers + symbols
+    random.shuffle(new_password)
 
     new_password = "".join(new_password)
-    password.insert(0,new_password)
+    password.delete(0, END)
+    password.insert(0, new_password)
     pyperclip.copy(new_password)
 
 
@@ -105,6 +128,30 @@ password_generator_button.grid(row=7, column=2)
 
 add_button = Button(text="Add", width=33, command=save_password)
 add_button.grid(row=8, column=1, columnspan=2)
+
+
+def search_password():
+    search_key_word = website.get()
+    try:
+        with open("data.json", "r") as data_file:
+            data = json.load(data_file)
+
+    except FileNotFoundError:
+        print("File is not found")
+
+    else:
+        website_data = data.get(search_key_word)
+        found_email = website_data.get("email")
+        found_password = website_data.get("password")
+        email.delete(0, END)
+        email.insert(0, found_email)
+        password.delete(0, END)
+        password.insert(0, found_password)
+
+
+search_password_button = Button(text="Search", width=12, command=search_password)
+search_password_button.grid(row=1, column=2)
+
 
 def show_help():
     messagebox.showinfo("Help", message="You can either type any password you want in the password field or generate "

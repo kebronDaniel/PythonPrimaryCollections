@@ -27,8 +27,6 @@ def place_center():
     tim.home()
 
 
-
-
 screen.onkey(key="w", fun=move_forwards)
 screen.onkey(key="s", fun=move_backwards)
 screen.onkey(key="a", fun=rotate_clockwise)

@@ -1,3 +1,11 @@
-with open("hello.txt",mode="r") as file:
-    t = file.read()
-    print(t)
+import json
+
+new_data = {
+    "FaceBook":{
+        "email" : "kebr@gmail.com",
+        "password" : 121324
+
+    }
+}
+word = "FaceBook"
+print(new_data.get(word))
